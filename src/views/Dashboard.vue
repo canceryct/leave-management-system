@@ -1,0 +1,135 @@
+<script setup>
+import { ref, reactive, onMounted, onUnmounted } from 'vue';
+import { supabase } from '../supabase';
+import { ElMessage, ElNotification, ElMessageBox } from 'element-plus';
+import FullCalendar from '@fullcalendar/vue3';
+import dayGridPlugin from '@fullcalendar/daygrid';
+import interactionPlugin from '@fullcalendar/interaction';
+const user = ref(null);
+const userProfile = ref(null);
+const isModalVisible = ref(false);
+const selectedDate = ref('');
+const leaveTypes = ref([]);
+const potentialProxies = ref([]);
+const leaveForm = reactive({ leave_type_id: null, proxy_user_id: null, leave_period: 'full' });
+const calendarOptions = ref({
+  plugins: [dayGridPlugin, interactionPlugin], initialView: 'dayGridMonth', weekends: true, height: 'auto',
+  events: [], dateClick: handleDateClick, eventClick: handleEventClick, locale: 'zh-tw', buttonText: { today: '今天' },
+  eventDidMount: function(info) { const proxyName = info.event.extendedProps.proxy_user_name; if (proxyName) { info.el.title = `代理人：${proxyName}`; } },
+  validRange: { start: new Date().toISOString().split('T')[0] },
+});
+async function handleDateClick(arg) {
+  const existingEvent = calendarOptions.value.events.find(event => event.start === arg.dateStr && event.extendedProps?.user_id === user.value.id);
+  if (existingEvent) { ElMessage.warning('您在這天已經登記過假單了！'); return; }
+  selectedDate.value = arg.dateStr; await fetchPotentialProxies(arg.dateStr); isModalVisible.value = true;
+}
+function handleEventClick(arg) {
+  const eventOwnerId = arg.event.extendedProps?.user_id;
+  if (eventOwnerId === user.value.id) {
+    if (confirm(`您確定要刪除您在 ${arg.event.startStr} 的假單嗎？`)) { deleteLeaveRecord(arg.event.id); }
+  }
+}
+async function handleSubmitLeave() {
+  if (!leaveForm.leave_type_id || !leaveForm.proxy_user_id) { ElMessage.error('請選擇假別與代理人！'); return; }
+  try {
+    const { data: proxyRecords } = await supabase.from('leave_records').select('id').eq('proxy_user_id', user.value.id).eq('leave_date', selectedDate.value);
+    if (proxyRecords && proxyRecords.length > 0) {
+      await ElMessageBox.confirm('提醒：您當天已是其他人的代理人，確定要繼續請假嗎？', '代理人提醒', { type: 'warning' });
+    }
+    const { data, error } = await supabase.rpc('request_leave', { p_leave_date: selectedDate.value, p_leave_type_id: leaveForm.leave_type_id, p_proxy_user_id: leaveForm.proxy_user_id, p_leave_period: leaveForm.leave_period });
+    if (error) throw error;
+    if (data.success) {
+      ElNotification({ title: '成功', message: data.message, type: 'success' });
+      isModalVisible.value = false; Object.assign(leaveForm, { leave_type_id: null, proxy_user_id: null, leave_period: 'full' });
+      await fetchLeaveRecords();
+    } else { ElMessage.error(data.message); }
+  } catch (error) {
+    if (error.message !== 'Operation cancelled' && error !== 'cancel') { ElMessage.error('操作失敗：' + error.message); }
+  }
+}
+async function fetchLeaveTypes() { const { data } = await supabase.from('leave_types').select('*'); leaveTypes.value = data; }
+async function fetchPotentialProxies(date) {
+  if (!userProfile.value?.group_id) { potentialProxies.value = []; return; }
+  const { data: usersOnLeave } = await supabase.from('leave_records').select('user_id').eq('leave_date', date);
+  const userIdsOnLeave = usersOnLeave?.map(r => r.user_id) || [];
+  const { data: colleagues } = await supabase.from('profiles').select('id, full_name').eq('group_id', userProfile.value.group_id).neq('id', user.value.id);
+  potentialProxies.value = colleagues?.filter(c => !userIdsOnLeave.includes(c.id)) || [];
+}
+async function fetchLeaveRecords() {
+  if (!user.value) return;
+  const { data, error } = await supabase.rpc('get_calendar_events');
+  if (error) { console.error('Error fetching events:', error); ElMessage.error('讀取假單失敗: ' + error.message); return; }
+  calendarOptions.value.events = data.map(record => ({
+    id: record.id, title: `${record.full_name || '(未知)'} - ${record.leave_type_name || '(未知)'}${record.leave_period === 'am' ? ' (AM)' : record.leave_period === 'pm' ? ' (PM)' : ''}`, start: record.leave_date, allDay: true,
+    backgroundColor: record.user_id === user.value.id ? '#3788d8' : '#757575', borderColor: record.user_id === user.value.id ? '#3788d8' : '#757575',
+    extendedProps: { user_id: record.user_id, proxy_user_name: record.proxy_user_name }
+  }));
+}
+async function deleteLeaveRecord(recordId) {
+  const { error } = await supabase.from('leave_records').delete().eq('id', recordId);
+  if (error) { ElMessage.error('刪除失敗：' + error.message); } 
+  else { ElMessage.success('刪除成功！'); await fetchLeaveRecords(); }
+}
+async function initializePage() {
+  const { data: { user: currentUser } } = await supabase.auth.getUser();
+  if (!currentUser) return;
+  user.value = currentUser;
+  const { data: profileData } = await supabase.from('profiles').select('*').eq('id', user.value.id).single();
+  userProfile.value = profileData;
+  if (userProfile.value) {
+    await Promise.all([ fetchLeaveRecords(), fetchLeaveTypes(), fetchPotentialProxies(new Date().toISOString().split('T')[0]) ]);
+  }
+}
+const handleVisibilityChange = () => { if (!document.hidden) { console.log("頁面恢復可見，執行強制重新整理..."); location.reload(); } };
+onMounted(() => {
+  initializePage();
+  document.addEventListener('visibilitychange', handleVisibilityChange);
+});
+onUnmounted(() => {
+  document.removeEventListener('visibilitychange', handleVisibilityChange);
+});
+</script>
+
+<template>
+  <div>
+    <main style="padding: 1em;">
+      <FullCalendar :options="calendarOptions" />
+    </main>
+    <el-dialog v-model="isModalVisible" :title="'登記 ' + selectedDate + ' 的假單'">
+      <el-form :model="leaveForm" label-width="80px">
+        <el-form-item label="請假時段">
+          <el-radio-group v-model="leaveForm.leave_period">
+            <el-radio-button label="full">全天</el-radio-button>
+            <el-radio-button label="am">上午</el-radio-button>
+            <el-radio-button label="pm">下午</el-radio-button>
+          </el-radio-group>
+        </el-form-item>
+        <el-form-item label="假別">
+          <el-select v-model="leaveForm.leave_type_id" placeholder="請選擇假別" style="width: 100%;">
+            <el-option v-for="item in leaveTypes" :key="item.id" :label="item.name" :value="item.id" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="代理人">
+          <el-select v-model="leaveForm.proxy_user_id" placeholder="請選擇代理人" style="width: 100%;">
+            <el-option v-for="item in potentialProxies" :key="item.id" :label="item.full_name" :value="item.id" />
+          </el-select>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="isModalVisible = false">取消</el-button>
+        <el-button type="primary" @click="handleSubmitLeave">確定送出</el-button>
+      </template>
+    </el-dialog>
+  </div>
+</template>
+
+<style scoped>
+main {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+/* 讓過去的日期在視覺上變灰 */
+:deep(.fc-day-past) {
+  background-color: #f5f5f5;
+}
+</style>
