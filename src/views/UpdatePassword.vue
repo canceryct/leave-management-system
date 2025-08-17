@@ -1,54 +1,64 @@
 <script setup>
 import { ref } from 'vue';
 import { supabase } from '../supabase';
+import { useRouter } from 'vue-router';
 import { ElMessage, ElNotification } from 'element-plus';
 
+const router = useRouter();
 const newPassword = ref('');
 const confirmPassword = ref('');
 const loading = ref(false);
 
-async function handleChangePassword() {
-  // --- 前端驗證 ---
+// ✨✨✨ 這是重構後的、更穩固的函式 ✨✨✨
+async function handleUpdatePassword() {
+  // --- 1. 前端驗證 ---
   if (!newPassword.value || !confirmPassword.value) { ElMessage.error('請輸入並確認您的新密碼'); return; }
   if (newPassword.value.length < 6) { ElMessage.error('密碼長度至少需要 6 個字元'); return; }
   if (newPassword.value !== confirmPassword.value) { ElMessage.error('兩次輸入的密碼不一致！'); return; }
 
   loading.value = true;
   try {
-    const updateUserPromise = supabase.auth.updateUser({ password: newPassword.value });
-    const timeoutPromise = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error('timeout')), 7000)
-    );
-    await Promise.race([updateUserPromise, timeoutPromise]);
+    // --- 2. 執行密碼更新 ---
+    const { data, error: updateUserError } = await supabase.auth.updateUser({
+      password: newPassword.value
+    });
+
+    // --- 3. 錯誤優先處理 ---
+    // 如果 updateUser 操作回傳了任何錯誤
+    if (updateUserError) {
+      // 根據不同的錯誤，給出不同的提示
+      if (updateUserError.message.toLowerCase().includes('same as the old')) {
+        ElMessage.error('新密碼不能與舊密碼相同！');
+      } else if (updateUserError.message.toLowerCase().includes('password should be stronger')) {
+        ElMessage.error('密碼強度不足！請使用更複雜的密碼組合。');
+      } else {
+        ElMessage.error('密碼設定失敗: ' + updateUserError.message);
+      }
+      // 處理完錯誤後，立刻終止函式，不再往下執行
+      return; 
+    }
     
-    // --- 理想的成功路徑 ---
-    await supabase.rpc('set_password_as_changed');
+    // --- 4. 只有在完全沒有錯誤時，才執行成功路徑 ---
+    if (data.user) {
+        // 更新 profile 旗標
+        const { error: rpcError } = await supabase.rpc('set_password_as_changed');
+        if (rpcError) throw rpcError; // 如果這裡出錯，會被下面的 catch 捕捉
+    }
+    
+    // 登出並跳轉
     await supabase.auth.signOut();
-    ElNotification.success('密碼已成功更新！請使用您的新密碼重新登入。');
+    ElNotification.success('密碼已成功設定！將為您導向登入頁面。');
     router.push('/login');
 
   } catch (error) {
-    if (error.message === 'timeout') {
-      // --- 卡住時的處理流程 ---
-      ElNotification({
-        title: '請求已發送',
-        message: '您的密碼更新請求已在背景處理。5秒後將自動為您安全登出並返回登入頁面。',
-        type: 'info',
-        duration: 5000
-      });
-      
-      setTimeout(() => {
-        // ✨ 只負責導航到帶有指令的 URL
-        window.location.href = '/login?action=signout'; 
-      }, 5000);
-
-    } else {
-      ElMessage.error('密碼更新失敗: ' + error.message);
-      loading.value = false;
-    }
-  } 
+    // 這個 catch 現在只會捕捉 rpc 或 signOut 等預期外的錯誤
+    console.error('Password update failed unexpectedly:', error);
+    ElMessage.error('發生預期外的錯誤: ' + error.message);
+  } finally {
+    loading.value = false;
+  }
 }
-</script>git push
+</script>
 
 <template>
   <div class="password-update-container">
@@ -56,7 +66,7 @@ async function handleChangePassword() {
       <h2>設定您的新密碼</h2>
       <p>請為您的帳號設定一個新的、安全的密碼。</p>
       
-      <form @submit.prevent="handleChangePassword">
+      <form @submit.prevent="handleUpdatePassword">
         <div class="input-group">
           <label for="new-password">新密碼</label>
           <input 
@@ -78,7 +88,7 @@ async function handleChangePassword() {
           />
         </div>
         <button type="submit" :disabled="loading">
-          {{ loading ? '更新中...' : '確認並設定密碼' }}
+          {{ loading ? '設定中...' : '確認並設定密碼' }}
         </button>
       </form>
     </div>
