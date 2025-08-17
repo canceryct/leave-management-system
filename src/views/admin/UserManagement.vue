@@ -126,7 +126,38 @@ onUnmounted(() => {
     </el-table>
 
     <el-dialog v-model="dialogVisible" :title="isEditMode ? '編輯使用者' : '新增使用者'" width="500px" @close="resetFormAndValidation">
-      </el-dialog>
+      <el-form :model="form" :rules="rules" ref="formRef" label-width="120px">
+        <el-form-item label="使用者帳號" prop="username" for="username-input">
+          <el-input v-model="form.username" :disabled="isEditMode" id="username-input" />
+        </el-form-item>
+        <el-form-item label="姓名" prop="full_name" for="fullname-input">
+          <el-input v-model="form.full_name" id="fullname-input" />
+        </el-form-item>
+        <el-form-item label="Email" prop="email" for="email-input">
+          <el-input v-model="form.email" id="email-input" />
+        </el-form-item>
+        <el-form-item v-if="!isEditMode" label="初始密碼" prop="password" for="password-input">
+          <el-input v-model="form.password" type="password" show-password id="password-input" />
+        </el-form-item>
+        <el-form-item label="所屬組別" prop="group_id" for="group-select">
+          <el-select v-model="form.group_id" placeholder="請選擇組別" style="width: 100%;" id="group-select">
+            <el-option v-for="group in groups" :key="group.id" :label="group.name" :value="group.id" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="角色" prop="role" for="role-radiogroup">
+           <el-radio-group v-model="form.role" id="role-radiogroup">
+            <el-radio label="user">一般使用者</el-radio>
+            <el-radio label="admin">管理員</el-radio>
+          </el-radio-group>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="dialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="handleSubmit">確定</el-button>
+        </span>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
