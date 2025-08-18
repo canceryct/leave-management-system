@@ -59,7 +59,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div style="padding: 2em;">
+  <div class="page-container">
     <div style="display: flex; justify-content: space-between; align-items: center;">
       <h1>名額設定</h1>
       </div>
@@ -73,9 +73,8 @@ onUnmounted(() => {
       stripe 
       style="width: 100%; margin-top: 20px;"
     >
-      <el-table-column prop="name" label="組別名稱" min-width="300" />
-
-      <el-table-column label="人數上限" width="200" align="center">
+      <el-table-column prop="name" label="組別名稱" width="450" />
+      <el-table-column label="人數上限" width="450" align="center">
         <template #default="scope">
           <el-input-number
             :model-value="scope.row.limit_count"
@@ -92,5 +91,14 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
-/* 預留區塊，方便未來添加專屬於此頁面的樣式 */
+/* 新增統一的頁面容器樣式 */
+.page-container {
+  /* 讓容器嘗試佔滿父元素的可用寬度 */
+  width: 100%; 
+  /* 限制最大寬度，在大螢幕上不會過寬 */
+  max-width: 1200px;
+  padding: 2em;
+  /* 確保 padding 不會撐大容器的總寬度 */
+  box-sizing: border-box; 
+}
 </style>

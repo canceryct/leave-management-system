@@ -99,7 +99,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div style="padding: 2em;">
+  <div class="page-container">
     <div style="display: flex; justify-content: space-between; align-items: center;">
       <h1>使用者管理</h1>
       <el-button type="primary" @click="openCreateDialog">新增使用者</el-button>
@@ -107,14 +107,14 @@ onUnmounted(() => {
     <p>在這裡，您可以新增、編輯、刪除使用者，並為他們分配組別與重設密碼。</p>
 
     <el-table :data="users" v-loading="loading" border stripe style="width: 100%; margin-top: 20px;">
-      <el-table-column prop="username" label="使用者帳號" width="180" />
-      <el-table-column prop="full_name" label="姓名" width="180" />
-      <el-table-column prop="email" label="Email" min-width="250" /> 
-      <el-table-column prop="role" label="角色" width="120" />
-      <el-table-column label="所屬組別">
+      <el-table-column prop="username" label="使用者帳號" width="150" />
+      <el-table-column prop="full_name" label="姓名" width="80" />
+      <el-table-column prop="email" label="Email" min-width="220" /> 
+      <el-table-column prop="role" label="角色" width="80" />
+      <el-table-column label="所屬組別" width="150">
          <template #default="scope">{{ scope.row.groups?.name || '未分配' }}</template>
       </el-table-column>
-      <el-table-column label="操作" width="270" fixed="right">
+      <el-table-column label="操作" width="220" fixed="right">
         <template #default="scope">
           <div>
             <el-button size="small" @click="openEditDialog(scope.row)">編輯</el-button>
@@ -162,5 +162,14 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
-/* Scoped styles can be added here if needed */
+/* 新增統一的頁面容器樣式 */
+.page-container {
+  /* 讓容器嘗試佔滿父元素的可用寬度 */
+  width: 100%; 
+  /* 限制最大寬度，在大螢幕上不會過寬 */
+  max-width: 1200px;
+  padding: 2em;
+  /* 確保 padding 不會撐大容器的總寬度 */
+  box-sizing: border-box; 
+}
 </style>

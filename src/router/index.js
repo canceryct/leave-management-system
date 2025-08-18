@@ -24,7 +24,17 @@ const routes = [
 
 const router = createRouter({ history: createWebHistory(), routes });
 
+// ✨ 1. 在這裡定義超時時間 (10 分鐘)
+const INACTIVITY_TIMEOUT = 10 * 60 * 1000; 
+
 router.beforeEach(async (to, from, next) => {
+  // 1. 檢查閒置是否超時
+  const lastActivity = localStorage.getItem('lastActivity');
+  if (lastActivity && (new Date().getTime() - Number(lastActivity) > INACTIVITY_TIMEOUT)) {
+    await supabase.auth.signOut();
+    localStorage.removeItem('lastActivity'); 
+  }
+
   // 白名單模式依然是最穩固的，直接放行這些頁面
   const publicPages = ['/login', '/update-password'];
   if (publicPages.includes(to.path)) {

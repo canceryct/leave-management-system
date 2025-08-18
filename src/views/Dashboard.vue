@@ -1,10 +1,15 @@
 <script setup>
-import { ref, reactive, onMounted, onUnmounted } from 'vue';
+import { ref, reactive, onMounted, onUnmounted, watch } from 'vue';
 import { supabase } from '../supabase';
 import { ElMessage, ElNotification, ElMessageBox } from 'element-plus';
 import FullCalendar from '@fullcalendar/vue3';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
+import listPlugin from '@fullcalendar/list'; // ✨ 1. 錯誤修正：補上 listWeek 需要的 listPlugin
+
+const isMobile = ref(window.innerWidth < 768);
+const handleResize = () => { isMobile.value = window.innerWidth < 768; };
+
 const user = ref(null);
 const userProfile = ref(null);
 const isModalVisible = ref(false);
@@ -12,17 +17,70 @@ const selectedDate = ref('');
 const leaveTypes = ref([]);
 const potentialProxies = ref([]);
 const leaveForm = reactive({ leave_type_id: null, proxy_user_id: null, leave_period: 'full' });
+const calendarEvents = ref([]);
+
+// ✨ 2. 錯誤修正：初始化時直接給予一個完整的預設值 (桌面版)
 const calendarOptions = ref({
-  plugins: [dayGridPlugin, interactionPlugin], initialView: 'dayGridMonth', weekends: true, height: 'auto',
-  events: [], dateClick: handleDateClick, eventClick: handleEventClick, locale: 'zh-tw', buttonText: { today: '今天' },
+  plugins: [dayGridPlugin, interactionPlugin, listPlugin],
+  initialView: 'dayGridMonth',
+  weekends: true,
+  height: 'auto',
+  events: [], // 先給一個空陣列
+  dateClick: handleDateClick,
+  eventClick: handleEventClick,
+  locale: 'zh-tw',
+  buttonText: { today: '今天' },
   eventDidMount: function(info) { const proxyName = info.event.extendedProps.proxy_user_name; if (proxyName) { info.el.title = `代理人：${proxyName}`; } },
-  validRange: { start: new Date().toISOString().split('T')[0] },
 });
+
+// ✨ 3. 簡化 watch 邏輯，只在 isMobile 變化時重新產生設定
+watch(isMobile, (isMobileValue) => {
+  if (isMobileValue) {
+    calendarOptions.value = {
+      ...calendarOptions.value,
+      initialView: 'listWeek',
+      headerToolbar: {
+        left: 'prev,next',
+        center: 'title',
+        right: 'today'
+      },
+      dayHeaderFormat: { weekday: 'short' },
+    };
+  } else {
+    calendarOptions.value = {
+      ...calendarOptions.value,
+      initialView: 'dayGridMonth',
+      headerToolbar: null, // 使用預設的 toolbar
+      dayHeaderFormat: null, // 使用預設的 format
+    };
+  }
+});
+
+// ✨ 4. 另外監聽 events 變化，只更新 events 屬性
+watch(calendarEvents, (newEvents) => {
+  calendarOptions.value.events = newEvents;
+});
+
+
 async function handleDateClick(arg) {
-  const existingEvent = calendarOptions.value.events.find(event => event.start === arg.dateStr && event.extendedProps?.user_id === user.value.id);
-  if (existingEvent) { ElMessage.warning('您在這天已經登記過假單了！'); return; }
-  selectedDate.value = arg.dateStr; await fetchPotentialProxies(arg.dateStr); isModalVisible.value = true;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  if (arg.date < today) {
+    ElMessage.info('無法在過去的日期登記假單');
+    return;
+  }
+  const existingEvent = calendarEvents.value.find(event => 
+    event.start === arg.dateStr && event.extendedProps?.user_id === user.value.id
+  );
+  if (existingEvent) {
+    ElMessage.warning('您在這天已經登記過假單了！');
+    return;
+  }
+  selectedDate.value = arg.dateStr;
+  await fetchPotentialProxies(arg.dateStr);
+  isModalVisible.value = true;
 }
+
 function handleEventClick(arg) {
   const eventOwnerId = arg.event.extendedProps?.user_id;
   if (eventOwnerId === user.value.id) {
@@ -59,7 +117,7 @@ async function fetchLeaveRecords() {
   if (!user.value) return;
   const { data, error } = await supabase.rpc('get_calendar_events');
   if (error) { console.error('Error fetching events:', error); ElMessage.error('讀取假單失敗: ' + error.message); return; }
-  calendarOptions.value.events = data.map(record => ({
+  calendarEvents.value = data.map(record => ({
     id: record.id, title: `${record.full_name || '(未知)'} - ${record.leave_type_name || '(未知)'}${record.leave_period === 'am' ? ' (AM)' : record.leave_period === 'pm' ? ' (PM)' : ''}`, start: record.leave_date, allDay: true,
     backgroundColor: record.user_id === user.value.id ? '#3788d8' : '#757575', borderColor: record.user_id === user.value.id ? '#3788d8' : '#757575',
     extendedProps: { user_id: record.user_id, proxy_user_name: record.proxy_user_name }
@@ -81,20 +139,22 @@ async function initializePage() {
   }
 }
 const handleVisibilityChange = () => { if (!document.hidden) { console.log("頁面恢復可見，執行強制重新整理..."); location.reload(); } };
+
 onMounted(() => {
+  handleResize(); // 立即執行一次，確保初始 isMobile 狀態正確
   initializePage();
+  window.addEventListener('resize', handleResize);
   document.addEventListener('visibilitychange', handleVisibilityChange);
 });
 onUnmounted(() => {
+  window.removeEventListener('resize', handleResize);
   document.removeEventListener('visibilitychange', handleVisibilityChange);
 });
 </script>
 
 <template>
-  <div>
-    <main style="padding: 1em;">
-      <FullCalendar :options="calendarOptions" />
-    </main>
+  <div class="page-container">
+    <FullCalendar :options="calendarOptions" />
     <el-dialog v-model="isModalVisible" :title="'登記 ' + selectedDate + ' 的假單'">
       <el-form :model="leaveForm" label-width="80px">
         <el-form-item label="請假時段">
@@ -124,12 +184,28 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
-main {
+.page-container {
   max-width: 1200px;
   margin: 0 auto;
+  padding: 2em;
 }
-/* 讓過去的日期在視覺上變灰 */
 :deep(.fc-day-past) {
   background-color: #f5f5f5;
+}
+
+@media (max-width: 768px) {
+  .page-container {
+    padding: 1em;
+  }
+  :deep(.fc .fc-toolbar-title) {
+    font-size: 1.1em;
+  }
+  :deep(.fc-event-title) {
+    font-size: 0.9em;
+  }
+  :deep(.fc-list-event) {
+    padding-top: 8px;
+    padding-bottom: 8px;
+  }
 }
 </style>
