@@ -5,7 +5,7 @@ import { ElMessage, ElNotification, ElMessageBox } from 'element-plus';
 import FullCalendar from '@fullcalendar/vue3';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
-import listPlugin from '@fullcalendar/list'; // ✨ 1. 錯誤修正：補上 listWeek 需要的 listPlugin
+import listPlugin from '@fullcalendar/list';
 
 const isMobile = ref(window.innerWidth < 768);
 const handleResize = () => { isMobile.value = window.innerWidth < 768; };
@@ -19,48 +19,53 @@ const potentialProxies = ref([]);
 const leaveForm = reactive({ leave_type_id: null, proxy_user_id: null, leave_period: 'full' });
 const calendarEvents = ref([]);
 
-// ✨ 2. 錯誤修正：初始化時直接給予一個完整的預設值 (桌面版)
 const calendarOptions = ref({
   plugins: [dayGridPlugin, interactionPlugin, listPlugin],
   initialView: 'dayGridMonth',
   weekends: true,
   height: 'auto',
-  events: [], // 先給一個空陣列
+  events: [],
   dateClick: handleDateClick,
   eventClick: handleEventClick,
   locale: 'zh-tw',
   buttonText: { today: '今天' },
   eventDidMount: function(info) { const proxyName = info.event.extendedProps.proxy_user_name; if (proxyName) { info.el.title = `代理人：${proxyName}`; } },
+  eventContent: handleEventContent,
 });
 
-// ✨ 3. 簡化 watch 邏輯，只在 isMobile 變化時重新產生設定
+// ✨ 全新版本的 handleEventContent
+function handleEventContent(arg) {
+  if (isMobile.value) {
+    const name = arg.event.title.split(' - ')[0];
+    const period = arg.event.extendedProps.leave_period;
+    let newTitle = name;
+    if (period === 'am') {
+      newTitle += 'AM';
+    } else if (period === 'pm') {
+      newTitle += 'PM';
+    }
+    return {
+      html: `<div class="fc-event-main-frame"><div class="fc-event-title-container"><div class="fc-event-title fc-sticky">${newTitle}</div></div></div>`
+    };
+  }
+  return;
+}
+
 watch(isMobile, (isMobileValue) => {
   if (isMobileValue) {
-    calendarOptions.value = {
-      ...calendarOptions.value,
-      initialView: 'listWeek',
-      headerToolbar: {
-        left: 'prev,next',
-        center: 'title',
-        right: 'today'
-      },
-      dayHeaderFormat: { weekday: 'short' },
-    };
+    calendarOptions.value.initialView = 'listWeek';
+    calendarOptions.value.headerToolbar = { left: 'prev,next', center: 'title', right: 'today' };
+    calendarOptions.value.dayHeaderFormat = { weekday: 'short' };
   } else {
-    calendarOptions.value = {
-      ...calendarOptions.value,
-      initialView: 'dayGridMonth',
-      headerToolbar: null, // 使用預設的 toolbar
-      dayHeaderFormat: null, // 使用預設的 format
-    };
+    calendarOptions.value.initialView = 'dayGridMonth';
+    calendarOptions.value.headerToolbar = null;
+    calendarOptions.value.dayHeaderFormat = null;
   }
 });
 
-// ✨ 4. 另外監聽 events 變化，只更新 events 屬性
 watch(calendarEvents, (newEvents) => {
   calendarOptions.value.events = newEvents;
 });
-
 
 async function handleDateClick(arg) {
   const today = new Date();
@@ -82,11 +87,39 @@ async function handleDateClick(arg) {
 }
 
 function handleEventClick(arg) {
-  const eventOwnerId = arg.event.extendedProps?.user_id;
-  if (eventOwnerId === user.value.id) {
-    if (confirm(`您確定要刪除您在 ${arg.event.startStr} 的假單嗎？`)) { deleteLeaveRecord(arg.event.id); }
+  const event = arg.event;
+  const props = event.extendedProps;
+  const title = event.title;
+  const date = event.startStr;
+  const proxyName = props.proxy_user_name || '未指定';
+
+  if (props.user_id === user.value.id) {
+    ElMessageBox.confirm(
+      `<div><p><strong>日期：</strong> ${date}</p><p><strong>假別：</strong> ${title.split(' - ')[1] || title}</p><p><strong>代理人：</strong> ${proxyName}</p><br><p>您確定要刪除這筆假單嗎？</p></div>`,
+      '假單詳情與刪除確認',
+      {
+        dangerouslyUseHTMLString: true,
+        confirmButtonText: '確定刪除',
+        cancelButtonText: '取消',
+        type: 'warning',
+      }
+    ).then(() => {
+      deleteLeaveRecord(event.id);
+    }).catch(() => {
+      ElMessage.info('已取消刪除操作');
+    });
+  } else {
+    ElMessageBox.alert(
+      `<div><p><strong>請假人：</strong> ${title.split(' - ')[0]}</p><p><strong>日期：</strong> ${date}</p><p><strong>假別：</strong> ${title.split(' - ')[1] || title}</p><p><strong>代理人：</strong> ${proxyName}</p></div>`,
+      '假單詳情',
+      {
+        dangerouslyUseHTMLString: true,
+        confirmButtonText: '關閉',
+      }
+    );
   }
 }
+
 async function handleSubmitLeave() {
   if (!leaveForm.leave_type_id || !leaveForm.proxy_user_id) { ElMessage.error('請選擇假別與代理人！'); return; }
   try {
@@ -105,7 +138,9 @@ async function handleSubmitLeave() {
     if (error.message !== 'Operation cancelled' && error !== 'cancel') { ElMessage.error('操作失敗：' + error.message); }
   }
 }
+
 async function fetchLeaveTypes() { const { data } = await supabase.from('leave_types').select('*'); leaveTypes.value = data; }
+
 async function fetchPotentialProxies(date) {
   if (!userProfile.value?.group_id) { potentialProxies.value = []; return; }
   const { data: usersOnLeave } = await supabase.from('leave_records').select('user_id').eq('leave_date', date);
@@ -113,21 +148,33 @@ async function fetchPotentialProxies(date) {
   const { data: colleagues } = await supabase.from('profiles').select('id, full_name').eq('group_id', userProfile.value.group_id).neq('id', user.value.id);
   potentialProxies.value = colleagues?.filter(c => !userIdsOnLeave.includes(c.id)) || [];
 }
+
+// ✨ 更新 fetchLeaveRecords 以包含 leave_period
 async function fetchLeaveRecords() {
   if (!user.value) return;
   const { data, error } = await supabase.rpc('get_calendar_events');
   if (error) { console.error('Error fetching events:', error); ElMessage.error('讀取假單失敗: ' + error.message); return; }
   calendarEvents.value = data.map(record => ({
-    id: record.id, title: `${record.full_name || '(未知)'} - ${record.leave_type_name || '(未知)'}${record.leave_period === 'am' ? ' (AM)' : record.leave_period === 'pm' ? ' (PM)' : ''}`, start: record.leave_date, allDay: true,
-    backgroundColor: record.user_id === user.value.id ? '#3788d8' : '#757575', borderColor: record.user_id === user.value.id ? '#3788d8' : '#757575',
-    extendedProps: { user_id: record.user_id, proxy_user_name: record.proxy_user_name }
+    id: record.id, 
+    title: `${record.full_name || '(未知)'} - ${record.leave_type_name || '(未知)'}${record.leave_period === 'am' ? ' (AM)' : record.leave_period === 'pm' ? ' (PM)' : ''}`, 
+    start: record.leave_date, 
+    allDay: true,
+    backgroundColor: record.user_id === user.value.id ? '#3788d8' : '#757575', 
+    borderColor: record.user_id === user.value.id ? '#3788d8' : '#757575',
+    extendedProps: { 
+      user_id: record.user_id, 
+      proxy_user_name: record.proxy_user_name,
+      leave_period: record.leave_period
+    }
   }));
 }
+
 async function deleteLeaveRecord(recordId) {
   const { error } = await supabase.from('leave_records').delete().eq('id', recordId);
   if (error) { ElMessage.error('刪除失敗：' + error.message); } 
   else { ElMessage.success('刪除成功！'); await fetchLeaveRecords(); }
 }
+
 async function initializePage() {
   const { data: { user: currentUser } } = await supabase.auth.getUser();
   if (!currentUser) return;
@@ -138,14 +185,16 @@ async function initializePage() {
     await Promise.all([ fetchLeaveRecords(), fetchLeaveTypes(), fetchPotentialProxies(new Date().toISOString().split('T')[0]) ]);
   }
 }
+
 const handleVisibilityChange = () => { if (!document.hidden) { console.log("頁面恢復可見，執行強制重新整理..."); location.reload(); } };
 
 onMounted(() => {
-  handleResize(); // 立即執行一次，確保初始 isMobile 狀態正確
+  handleResize();
   initializePage();
   window.addEventListener('resize', handleResize);
   document.addEventListener('visibilitychange', handleVisibilityChange);
 });
+
 onUnmounted(() => {
   window.removeEventListener('resize', handleResize);
   document.removeEventListener('visibilitychange', handleVisibilityChange);
@@ -201,7 +250,7 @@ onUnmounted(() => {
     font-size: 1.1em;
   }
   :deep(.fc-event-title) {
-    font-size: 0.9em;
+    font-size: 10px;
   }
   :deep(.fc-list-event) {
     padding-top: 8px;

@@ -113,25 +113,83 @@ async function handleLogin() {
 </template>
 
 <style scoped>
-/* ... CSS 變數和通用樣式保持不變 ... */
-:root {
+/* ✨ 將 CSS 變數定義從 :root 移到元件的根元素 .login-page */
+.login-page {
   --primary-color: #409EFF;
   --background-color: #f0f2f5;
   --card-background-color: #ffffff;
   --text-color: #303133;
   --subtitle-color: #606266;
   --illustration-bg-color: #f5f7fa;
+
+  /* 原本 .login-page 的樣式保持不變 */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background-color: var(--background-color);
+  font-family: 'Helvetica Neue', Helvetica, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', '微软雅黑', Arial, sans-serif;
 }
-.login-page { display: flex; justify-content: center; align-items: center; min-height: 100vh; background-color: var(--background-color); font-family: 'Helvetica Neue', Helvetica, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', '微软雅黑', Arial, sans-serif; }
-.login-card { display: flex; width: 90%; max-width: 960px; min-height: 600px; background-color: var(--card-background-color); border-radius: 12px; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1); overflow: hidden; }
-.form-side { flex: 1.2; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 3rem 4rem; }
-.form-container { width: 100%; }
-.form-header { text-align: left; width: 100%; margin-bottom: 2.5rem; }
-.title { font-size: 2.2rem; font-weight: 700; color: var(--text-color); margin-bottom: 0.75rem; }
-.subtitle { font-size: 1rem; color: var(--subtitle-color); }
-.login-form .el-form-item { margin-bottom: 1.75rem; }
-.login-button { width: 100%; font-size: 1rem; padding: 1.25rem 0; }
-.error-message { color: #F56C6C; text-align: center; margin-top: 1rem; font-size: 0.9rem; }
+
+.login-card {
+  display: flex;
+  width: 90%;
+  max-width: 960px;
+  min-height: 600px;
+  background-color: var(--card-background-color);
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  transition: all 0.3s ease-in-out; 
+}
+
+.form-side {
+  flex: 1.2;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 3rem 4rem;
+}
+
+.form-container {
+  width: 100%;
+}
+
+.form-header {
+  text-align: left;
+  width: 100%;
+  margin-bottom: 2.5rem;
+}
+
+.title {
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: var(--text-color);
+  margin-bottom: 0.75rem;
+}
+
+.subtitle {
+  font-size: 1rem;
+  color: var(--subtitle-color);
+}
+
+.login-form .el-form-item {
+  margin-bottom: 1.75rem;
+}
+
+.login-button {
+  width: 100%;
+  font-size: 1rem;
+  padding: 1.25rem 0;
+}
+
+.error-message {
+  color: #F56C6C;
+  text-align: center;
+  margin-top: 1rem;
+  font-size: 0.9rem;
+}
 
 .illustration-side {
   flex: 1;
@@ -145,20 +203,19 @@ async function handleLogin() {
   overflow: hidden;
 }
 
-/* ✨ 3. 將 CSS 選擇器從 svg 改為 img */
 .illustration-side img {
   width: 90%;
   max-width: 300px;
   height: auto;
-  object-fit: contain; /* 確保圖片比例正確 */
+  object-fit: contain;
   opacity: 0;
   transform: translateY(20px);
 }
 
-/* ✨ 4. 使用 :nth-child 來為圖片分別設定動畫 */
 .illustration-side img:nth-child(1) {
   animation: fadeInUp 0.7s 0.2s ease-out forwards;
 }
+
 .illustration-side img:nth-child(2) {
   animation: fadeInUp 0.7s 0.4s ease-out forwards;
 }
@@ -174,9 +231,69 @@ async function handleLogin() {
   }
 }
 
-@media (max-width: 860px) {
-  .login-card { flex-direction: column; min-height: auto; width: 90%; max-width: 450px; box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1); }
-  .illustration-side { display: none; }
-  .form-side { padding: 2.5rem; }
+
+/* --- 響應式設計 --- */
+
+/* 適用於平板和小型筆電 (寬度 <= 960px) */
+@media (max-width: 960px) {
+  .form-side {
+    padding: 3rem 2.5rem; 
+  }
+}
+
+
+/* 適用於手機 (寬度 <= 768px) */
+@media (max-width: 768px) {
+  .login-page {
+    /* 在手機上增加一點邊距，避免卡片緊貼螢幕邊緣 */
+    padding: 2rem 0;
+  }
+
+  .login-card {
+    flex-direction: column; /* 垂直排列 */
+    min-height: auto;       /* 根據內容調整高度 */
+    width: 90%;             /* 手機上佔據 90% 寬度 */
+    max-width: 400px;       /* 設定一個最大寬度 */
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+    overflow: hidden;       /* 確保圓角效果正常 */
+  }
+
+  .illustration-side {
+    display: flex;          /* ✨ 重新顯示圖片區塊 */
+    flex-direction: row;    /* 圖片水平排列 */
+    justify-content: center; /* 圖片置中 */
+    align-items: center;
+    padding: 2rem 1rem;     /* 調整上下左右邊距 */
+    gap: 1.5rem;            /* 調整圖片間距 */
+    order: -1;              /* ✨ 將圖片區塊移到表單上方 */
+    min-height: 160px;      /* 給予一個最小高度 */
+  }
+
+  .illustration-side img {
+    width: 45%;             /* 調整圖片寬度 */
+    max-width: 120px;       /* 限制最大寬度 */
+    height: auto;           /* 高度自動 */
+    max-height: 100px;      /* 限制最大高度 */
+    opacity: 1;             /* 確保可見 */
+    transform: translateY(0); /* 移除位移 */
+    animation: none;        /* 移除動畫 */
+  }
+
+  .form-side {
+    padding: 2rem 1.5rem 2.5rem; /* 調整表單區塊的邊距 (上、左右、下) */
+  }
+
+  .form-header {
+    text-align: center;
+    margin-bottom: 1.5rem;
+  }
+
+  .title {
+    font-size: 1.6rem;
+  }
+
+  .subtitle {
+    font-size: 0.9rem;
+  }
 }
 </style>
