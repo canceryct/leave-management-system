@@ -263,17 +263,17 @@ async function handleLogin() {
     flex-direction: row;    /* 圖片水平排列 */
     justify-content: center; /* 圖片置中 */
     align-items: center;
-    padding: 2rem 1rem;     /* 調整上下左右邊距 */
-    gap: 1.5rem;            /* 調整圖片間距 */
+    padding: 0.5rem 0.5rem;     /* 調整上下左右邊距 */
+    gap: 0.5rem;            /* 調整圖片間距 */
     order: -1;              /* ✨ 將圖片區塊移到表單上方 */
     min-height: 160px;      /* 給予一個最小高度 */
   }
 
   .illustration-side img {
-    width: 45%;             /* 調整圖片寬度 */
-    max-width: 120px;       /* 限制最大寬度 */
+    width: 50%;             /* 調整圖片寬度 */
+    max-width: 160px;       /* 限制最大寬度 */
     height: auto;           /* 高度自動 */
-    max-height: 100px;      /* 限制最大高度 */
+    max-height: 140px;      /* 限制最大高度 */
     opacity: 1;             /* 確保可見 */
     transform: translateY(0); /* 移除位移 */
     animation: none;        /* 移除動畫 */
