@@ -256,5 +256,10 @@ onUnmounted(() => {
     padding-top: 8px;
     padding-bottom: 8px;
   }
+  :deep(.fc-daygrid-day-number) {
+  font-size: 0.9em; /* 您可以調整這個數值，例如 1.1em 或 13px */
+  /* color: #555; */ /* 也可以改變顏色 */
+  /* font-weight: bold; */ /* 或是加粗 */
+  }
 }
 </style>
