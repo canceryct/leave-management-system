@@ -37,7 +37,7 @@ const calendarOptions = ref({
 function handleEventContent(arg) {
   // 手機版的邏輯，完全維持您提供的版本，不做任何改動
   if (isMobile.value) {
-    const name = arg.event.title.split(' - ')[0];
+    const name = arg.event.title.split('-')[0];
     const period = arg.event.extendedProps.leave_period;
     let newTitle = name;
     if (period === 'am') {
