@@ -20,7 +20,7 @@ async function handleChangePassword() {
     // --- 步驟一：建立「更新密碼」和「超時」的賽跑 ---
     const updateUserPromise = supabase.auth.updateUser({ password: newPassword.value });
     const timeoutPromise = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error('timeout')), 7000) // 設定 7 秒超時
+      setTimeout(() => reject(new Error('timeout')), 3000) // 設定 3 秒超時
     );
 
     // 等待比賽結果
@@ -47,15 +47,15 @@ async function handleChangePassword() {
       // 這是「卡住」時的處理流程
       ElNotification({
         title: '請求已發送',
-        message: '您的密碼更新請求已在背景處理。5秒後將自動為您安全登出並返回登入頁面。',
+        message: '您的密碼更新請求已在背景處理。3秒後將自動為您安全登出並返回登入頁面。',
         type: 'info',
-        duration: 5000
+        duration: 3000
       });
       
       setTimeout(() => {
         supabase.auth.signOut(); // 發送登出指令，但不等待
         window.location.href = '/login?action=signout'; // 強制重載到帶有指令的登入頁
-      }, 5000);
+      }, 3000);
 
     } else {
       // 這是其他真實的錯誤 (例如密碼強度不足、新舊密碼相同等)
@@ -109,13 +109,14 @@ async function handleChangePassword() {
 </template>
 
 <style scoped>
-.change-password-container {
+/* ✨ 1. 修正 class 名稱，並優化佈局 */
+.password-update-container {
   display: flex;
   justify-content: center;
-  align-items: center;
-  min-height: 80vh;
-  background-color: #f5f5f5;
+  padding: 4rem 2rem; /* 上下 4rem，左右 2rem 的間距 */
+  box-sizing: border-box;
 }
+
 .form-wrapper {
   padding: 2rem 3rem;
   background-color: white;
@@ -125,34 +126,42 @@ async function handleChangePassword() {
   max-width: 450px;
   text-align: center;
 }
+
 h2 {
   margin-bottom: 1rem;
+  font-size: 1.8rem;
 }
+
 p {
   color: #666;
   margin-bottom: 2rem;
   line-height: 1.6;
 }
+
 .input-group {
   text-align: left;
   margin-bottom: 1.5rem;
 }
+
 .input-group label {
   display: block;
   margin-bottom: 0.5rem;
   font-weight: 500;
 }
+
 input {
   width: 100%;
   padding: 10px;
   border: 1px solid #ccc;
   border-radius: 4px;
-  box-sizing: border-box; /* Ensures padding doesn't affect width */
+  box-sizing: border-box;
+  font-size: 1rem;
 }
+
 button {
   width: 100%;
   padding: 12px;
-  background-color: #409EFF; /* Element Plus Primary Color */
+  background-color: #409EFF;
   color: white;
   border: none;
   border-radius: 4px;
@@ -160,11 +169,26 @@ button {
   font-size: 16px;
   transition: background-color 0.3s;
 }
+
 button:disabled {
   background-color: #a0cfff;
   cursor: not-allowed;
 }
+
 button:not(:disabled):hover {
   background-color: #79bbff;
+}
+
+/* ✨ 2. 新增響應式設計 */
+@media (max-width: 480px) {
+  .password-update-container {
+    padding: 1rem; /* 手機上邊距小一點 */
+    align-items: flex-start; /* 從頂部開始對齊，避免鍵盤彈出時跑版 */
+  }
+
+  .form-wrapper {
+    padding: 2rem 1.5rem; /* 縮小卡片內部邊距 */
+    box-shadow: none; /* 手機上移除陰影，看起來更簡潔 */
+  }
 }
 </style>

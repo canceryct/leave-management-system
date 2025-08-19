@@ -33,8 +33,9 @@ const calendarOptions = ref({
   eventContent: handleEventContent,
 });
 
-// ✨ 全新版本的 handleEventContent
+// ✨ 唯一的修改點在這裡 ✨
 function handleEventContent(arg) {
+  // 手機版的邏輯，完全維持您提供的版本，不做任何改動
   if (isMobile.value) {
     const name = arg.event.title.split(' - ')[0];
     const period = arg.event.extendedProps.leave_period;
@@ -47,8 +48,11 @@ function handleEventContent(arg) {
     return {
       html: `<div class="fc-event-main-frame"><div class="fc-event-title-container"><div class="fc-event-title fc-sticky">${newTitle}</div></div></div>`
     };
+  } else {
+    // ✨ 新增：在電腦版，回傳 FullCalendar 預設的內容結構 ✨
+    // 這會讓電腦版的事件標題恢復正常顯示
+    return { html: `<div class="fc-event-title fc-sticky">${arg.event.title}</div>` };
   }
-  return;
 }
 
 watch(isMobile, (isMobileValue) => {
@@ -66,6 +70,8 @@ watch(isMobile, (isMobileValue) => {
 watch(calendarEvents, (newEvents) => {
   calendarOptions.value.events = newEvents;
 });
+
+// --- 以下所有函式，完全維持您提供的版本，不做任何更動 ---
 
 async function handleDateClick(arg) {
   const today = new Date();
@@ -149,7 +155,6 @@ async function fetchPotentialProxies(date) {
   potentialProxies.value = colleagues?.filter(c => !userIdsOnLeave.includes(c.id)) || [];
 }
 
-// ✨ 更新 fetchLeaveRecords 以包含 leave_period
 async function fetchLeaveRecords() {
   if (!user.value) return;
   const { data, error } = await supabase.rpc('get_calendar_events');
@@ -229,6 +234,11 @@ onUnmounted(() => {
         <el-button type="primary" @click="handleSubmitLeave">確定送出</el-button>
       </template>
     </el-dialog>
+    <div class="button-container">
+      <router-link to="/update-password" class="update-password-button">
+        修改密碼
+      </router-link>
+    </div>
   </div>
 </template>
 
@@ -250,16 +260,55 @@ onUnmounted(() => {
     font-size: 1.1em;
   }
   :deep(.fc-event-title) {
-    font-size: 10px;
+    font-size: 0.53rem;
   }
   :deep(.fc-list-event) {
     padding-top: 8px;
     padding-bottom: 8px;
   }
   :deep(.fc-daygrid-day-number) {
-  font-size: 0.9em; /* 您可以調整這個數值，例如 1.1em 或 13px */
+  font-size: 0.7em; /* 您可以調整這個數值，例如 1.1em 或 13px */
   /* color: #555; */ /* 也可以改變顏色 */
   /* font-weight: bold; */ /* 或是加粗 */
   }
+}
+
+/* --- ✨ 按鈕容器的樣式 (維持不變) --- */
+.button-container {
+  margin-top: 1.5rem; 
+  text-align: right; 
+}
+
+/* --- ✨ 全新：模仿 el-button small 樣式的 CSS --- */
+.update-password-button {
+  /* 基本佈局和對齊 */
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  
+  /* 外觀尺寸 - 模仿 size="small" */
+  line-height: 1;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 8px 15px;
+  border-radius: 4px;
+
+  /* 顏色 - 模仿預設按鈕 */
+  color: #b0afaf;
+  background-color: #ffffff;
+  border: 1px solid #dcdfe6;
+
+  /* 其他屬性 */
+  cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: .1s;
+}
+
+/* 模仿滑鼠懸浮時的效果 */
+.update-password-button:hover {
+  color: #409EFF;
+  border-color: #c6e2ff;
+  background-color: #ecf5ff;
 }
 </style>
