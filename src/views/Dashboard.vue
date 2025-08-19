@@ -161,7 +161,7 @@ async function fetchLeaveRecords() {
   if (error) { console.error('Error fetching events:', error); ElMessage.error('讀取假單失敗: ' + error.message); return; }
   calendarEvents.value = data.map(record => ({
     id: record.id, 
-    title: `${record.full_name || '(未知)'} - ${record.leave_type_name || '(未知)'}${record.leave_period === 'am' ? ' (AM)' : record.leave_period === 'pm' ? ' (PM)' : ''}`, 
+    title: `${record.full_name || '(未知)'}-${record.leave_type_name || '(未知)'}${record.leave_period === 'am' ? '(AM)' : record.leave_period === 'pm' ? '(PM)' : ''}`, 
     start: record.leave_date, 
     allDay: true,
     backgroundColor: record.user_id === user.value.id ? '#3788d8' : '#757575', 
