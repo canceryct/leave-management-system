@@ -295,6 +295,11 @@ onUnmounted(() => {
       </template>
     </el-dialog>
   </div>
+  <div class="button-container">
+  <router-link to="/update-password" class="update-password-button">
+    修改密碼
+  </router-link>
+</div>
 </template>
 
 <style scoped>
