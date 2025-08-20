@@ -96,7 +96,6 @@ onUnmounted(() => {
   /* 讓容器嘗試佔滿父元素的可用寬度 */
   width: 100%; 
   /* 限制最大寬度，在大螢幕上不會過寬 */
-  max-width: 1200px;
   padding: 2em;
   /* 確保 padding 不會撐大容器的總寬度 */
   box-sizing: border-box; 
