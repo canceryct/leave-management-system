@@ -7,6 +7,7 @@ import UpdatePassword from '../views/UpdatePassword.vue';
 import AdminLayout from '../views/admin/AdminLayout.vue';
 import UserManagement from '../views/admin/UserManagement.vue';
 import QuotaManagement from '../views/admin/QuotaManagement.vue';
+import DailyView from '../views/DailyView.vue';
 
 const routes = [
   { path: '/', name: 'Home', redirect: '/login' },
@@ -19,13 +20,19 @@ const routes = [
       { path: 'users', name: 'UserManagement', component: UserManagement },
       { path: 'quotas', name: 'QuotaManagement', component: QuotaManagement }
     ]
+  },
+  { 
+    path: '/daily-view', 
+    name: 'DailyView', 
+    component: DailyView, 
+    meta: { requiresAuth: true } 
   }
 ];
 
 const router = createRouter({ history: createWebHistory(), routes });
 
-// ✨ 1. 在這裡定義超時時間 (10 分鐘)
-const INACTIVITY_TIMEOUT = 10 * 60 * 1000; 
+// ✨ 1. 在這裡定義超時時間 (3分鐘)
+const INACTIVITY_TIMEOUT = 3 * 60 * 1000; 
 
 router.beforeEach(async (to, from, next) => {
   // 1. 檢查閒置是否超時
