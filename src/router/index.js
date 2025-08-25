@@ -31,8 +31,8 @@ const routes = [
 
 const router = createRouter({ history: createWebHistory(), routes });
 
-// ✨ 1. 在這裡定義超時時間 (3分鐘)
-const INACTIVITY_TIMEOUT = 3 * 60 * 1000; 
+// ✨ 1. 在這裡定設定閒置登出時間 (5分鐘)
+const INACTIVITY_TIMEOUT = 5 * 60 * 1000; 
 
 router.beforeEach(async (to, from, next) => {
   // 1. 檢查閒置是否超時

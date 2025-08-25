@@ -22,7 +22,7 @@ async function handleLogin() {
     loading.value = true;
     errorMessage.value = null;
     if (!email.value || !password.value) {
-      throw new Error('Email 和密碼不能為空');
+      throw new Error('帳號和密碼不能為空');
     }
     
     // ✨ 直接使用 Email 和密碼登入，不再需要 RPC
@@ -40,7 +40,7 @@ async function handleLogin() {
     router.push('/dashboard');
 
   } catch (error) {
-    errorMessage.value = 'Email 或密碼錯誤'; // 對使用者顯示統一的錯誤訊息
+    errorMessage.value = '帳號或密碼錯誤'; // 對使用者顯示統一的錯誤訊息
     console.error('Login failed:', error.message);
   } finally {
     loading.value = false;
@@ -55,14 +55,14 @@ async function handleLogin() {
         <div class="form-container">
           <div class="form-header">
             <h1 class="title">歡迎回來</h1>
-            <p class="subtitle">登入您的請假登記系統</p>
+            <p class="subtitle">基辦請假登記系統</p>
           </div>
           
           <el-form @submit.prevent="handleLogin" label-position="top" size="large" class="login-form">
-            <el-form-item label="Email (電子信箱)">
+            <el-form-item label="帳號">
               <el-input 
                 v-model="email" 
-                placeholder="請輸入您的 Email"
+                placeholder="請輸入您的帳號"
                 :prefix-icon="Message"
                 autocomplete="email" 
                 type="email"

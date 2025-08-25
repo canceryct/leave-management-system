@@ -42,7 +42,7 @@ const calendarOptions = ref({
   headerToolbar: { right: 'prev,next today dailyView' },
   customButtons: {
     dailyView: {
-      text: '每日檢視',
+      text: '以日檢視',
       click: () => {
         router.push('/daily-view'); 
       }
