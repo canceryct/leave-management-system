@@ -231,7 +231,7 @@ onUnmounted(() => {
 }
 
 .requester-col {
-  flex: 3;
+  flex: 4;
   padding-left: 10px;
 }
 
