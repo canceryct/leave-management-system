@@ -231,7 +231,7 @@ onUnmounted(() => {
 }
 
 .requester-col {
-  flex: 4;
+  flex: 3;
   padding-left: 10px;
 }
 
@@ -250,10 +250,10 @@ onUnmounted(() => {
 /* 響應式設計 */
 @media (max-width: 768px) {
   .daily-view-container {
-    padding: 1em;
+    padding: 0.5em;
   }
   .date-title {
-    font-size: 1.6rem;
+    font-size: 1.5rem;
   }
   .requester-col {
     flex: 2;
