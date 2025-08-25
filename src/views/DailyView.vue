@@ -95,7 +95,7 @@ onUnmounted(() => {
         </div>
         <div v-else>
           <el-table :data="groupedLeaveData" row-key="id" border style="width: 100%" class="whiteboard-table">
-            <el-table-column prop="name" label="組別" width="85" header-class-name="whiteboard-header-cell" class-name="whiteboard-cell" />
+            <el-table-column prop="name" label="組別" width="83" header-class-name="whiteboard-header-cell" class-name="whiteboard-cell" />
             <el-table-column label="請假人員詳細資訊" header-class-name="whiteboard-header-cell" class-name="whiteboard-cell">
               <template #default="scope">
                 <div v-if="scope.row.records.length > 0">
@@ -253,7 +253,7 @@ onUnmounted(() => {
     padding: 0.5em;
   }
   .date-title {
-    font-size: 1.5rem;
+    font-size: 1.6rem;
   }
   .requester-col {
     flex: 2;
