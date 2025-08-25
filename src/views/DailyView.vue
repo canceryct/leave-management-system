@@ -95,7 +95,7 @@ onUnmounted(() => {
         </div>
         <div v-else>
           <el-table :data="groupedLeaveData" row-key="id" border style="width: 100%" class="whiteboard-table">
-            <el-table-column prop="name" label="組別" width="82" header-class-name="whiteboard-header-cell" class-name="whiteboard-cell" />
+            <el-table-column prop="name" label="組別" width="85" header-class-name="whiteboard-header-cell" class-name="whiteboard-cell" />
             <el-table-column label="請假人員詳細資訊" header-class-name="whiteboard-header-cell" class-name="whiteboard-cell">
               <template #default="scope">
                 <div v-if="scope.row.records.length > 0">
@@ -137,7 +137,7 @@ onUnmounted(() => {
   background-color: #fafcfe; /* 淡藍色，模擬白板 */
   border: 2px solid #ccddee; /* 淺灰色邊框 */
   border-radius: 10px;
-  padding: 1.5em;
+  padding: 1em;
 }
 
 .whiteboard-text {
