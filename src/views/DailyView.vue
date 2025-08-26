@@ -43,7 +43,7 @@ async function fetchData(date) {
     if (leaveRes.error) throw leaveRes.error;
     if (groupsRes.error) throw groupsRes.error;
     leaveData.value = leaveRes.data;
-    const order = [7, 1, 2, 6, 3, 4, 5];
+    const order = [7, 1, 2, 6, 3, 4, 8, 5];
     allGroups.value = groupsRes.data.sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id));
   } catch (error) {
     ElMessage.error(`讀取資料失敗: ${error.message}`);

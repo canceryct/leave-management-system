@@ -3,6 +3,7 @@ import App from './App.vue';
 import router from './router';
 import { supabase } from './supabase';
 import ElementPlus from 'element-plus';
+import zhTw from 'element-plus/dist/locale/zh-tw.mjs';
 import 'element-plus/dist/index.css';
 import './style.css';
 
@@ -21,7 +22,7 @@ async function initializeApp() {
   const app = createApp(App);
 
   app.use(router);
-  app.use(ElementPlus);
+  app.use(ElementPlus, { locale: zhTw });
 
   let isAppMounted = false;
 

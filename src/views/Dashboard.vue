@@ -397,10 +397,10 @@ onUnmounted(() => {
     padding: 1em;
   }
   :deep(.fc .fc-toolbar-title) {
-    font-size: 0.95em;
+    font-size: 1em;
   }
   :deep(.fc-event-title) {
-    font-size: 0.53rem;
+    font-size: 0.6rem;
   }
   :deep(.fc-list-event) {
     padding-top: 8px;
@@ -408,7 +408,7 @@ onUnmounted(() => {
   }
   :deep(.fc .fc-button) {
     padding: 0.3em 0.6em;
-    font-size: 0.7em;
+    font-size: 0.8em;
   }
   :deep(.fc-daygrid-day-number) {
   font-size: 0.7em;
