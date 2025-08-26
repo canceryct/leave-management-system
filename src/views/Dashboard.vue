@@ -407,11 +407,11 @@ onUnmounted(() => {
     padding-bottom: 8px;
   }
   :deep(.fc .fc-button) {
-    padding: 0.4em 0.7em;
+    padding: 0.35em 0.65em;
     font-size: 0.8em;
   }
   :deep(.fc-daygrid-day-number) {
-  font-size: 0.7em;
+  font-size: 0.6.5em;
   }
 }
 
