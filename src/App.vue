@@ -52,6 +52,11 @@ async function handleLogout() {
     <main>
       <router-view />
     </main>
+    <div v-if="userProfile" class="floating-toolbar">
+      <router-link to="/dispatch-form" class="fab-button" title="新增派遣表單">
+        <span class="fab-icon">+</span>
+        </router-link>
+    </div>
   </div>
 </template>
 
@@ -70,6 +75,48 @@ body { margin: 0; font-family: sans-serif; }
 .current-user-display { font-size: 14px; color: #606266; }
 .current-user-display strong { font-weight: 600; color: #303133; }
 .desktop-only { display: inline; } /* 預設顯示 */
+
+/*懸浮派遣表單CSS 樣式*/
+.floating-toolbar {
+  position: fixed;
+  bottom: 30px;    /* 距離視窗底部 30px */
+  left: 30px;      /* ✨ 關鍵修改：從 right 改為 left，將按鈕移到左下角 */
+  z-index: 1000;
+}
+
+.fab-button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #409EFF;
+  color: white;
+  /* ✨ 關鍵修改：將尺寸從 56px 縮小為 50px */
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  text-decoration: none;
+  transition: all 0.3s ease;
+}
+
+.fab-button:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+.fab-icon {
+  /* ✨ 關鍵修改：將圖示大小從 28px 縮小為 24px */
+  font-size: 24px;
+  line-height: 1;
+}
+
+/* 針對手機的小螢幕，讓按鈕更靠近邊緣 */
+@media (max-width: 768px) {
+  .floating-toolbar {
+    bottom: 20px;
+    left: 20px;
+  }
+}
 
 /* --- ✨ 新增的響應式設計 ✨ --- */
 @media (max-width: 768px) {

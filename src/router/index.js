@@ -8,12 +8,19 @@ import AdminLayout from '../views/admin/AdminLayout.vue';
 import UserManagement from '../views/admin/UserManagement.vue';
 import QuotaManagement from '../views/admin/QuotaManagement.vue';
 import DailyView from '../views/DailyView.vue';
+import DispatchForm from '../views/DispatchForm.vue';
 
 const routes = [
   { path: '/', name: 'Home', redirect: '/login' },
   { path: '/login', name: 'Login', component: Login },
   { path: '/dashboard', name: 'Dashboard', component: Dashboard, meta: { requiresAuth: true } },
   { path: '/update-password', name: 'UpdatePassword', component: UpdatePassword },
+  { 
+    path: '/dispatch-form', 
+    name: 'DispatchForm', 
+    component: DispatchForm, 
+    meta: { requiresAuth: true } // 這個頁面需要登入才能訪問
+  },
   {
     path: '/admin', component: AdminLayout, meta: { requiresAuth: true, requiresAdmin: true }, redirect: '/admin/users',
     children: [

@@ -322,16 +322,9 @@ onUnmounted(() => {
 
 <template>
   <div class="page-container">
-    <div v-if="currentView === 'daily'" class="view-wrapper">
-      <el-button @click="currentView = 'calendar'" type="primary" style="margin-bottom: 1.5rem;">
-        返回月曆檢視
-      </el-button>
-      <DailyView />
-    </div>
+    
+    <FullCalendar :options="calendarOptions" />
 
-    <div v-else class="view-wrapper">
-      <FullCalendar :options="calendarOptions" />
-    </div>
     <el-dialog v-model="isModalVisible" :title="isEditMode ? '編輯 ' + selectedDate + ' 的假單' : '登記 ' + selectedDate + ' 的假單'">
       <el-form :model="leaveForm" label-width="80px">
         <el-form-item label="請假時段">
@@ -357,12 +350,14 @@ onUnmounted(() => {
         <el-button type="primary" @click="handleSubmitLeave">確定送出</el-button>
       </template>
     </el-dialog>
+
+    <div class="button-container">
+      <router-link to="/update-password" class="update-password-button">
+        修改密碼
+      </router-link>
+    </div>
+
   </div>
-  <div class="button-container">
-  <router-link to="/update-password" class="update-password-button">
-    修改密碼
-  </router-link>
-</div>
 </template>
 
 <style scoped>
